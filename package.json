@@ -1,0 +1,22 @@
+{
+  "name": "opencode-plugin-mempalace",
+  "version": "1.0.0",
+  "description": "OpenCode plugin for MemPalace memory system",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@opencode-ai/plugin": "*",
+    "execa": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.11.24",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
+  }
+}

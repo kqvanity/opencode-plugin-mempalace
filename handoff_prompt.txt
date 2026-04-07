@@ -1,0 +1,21 @@
+**CONTEXT**: 
+We are building a community open-source plugin for OpenCode: `opencode-plugin-mempalace`. 
+This plugin integrates the "MemPalace" (an AI memory system based on ChromaDB and SQLite) into OpenCode's terminal assistant.
+We have already completed the architecture design and feasibility research. 
+
+**GOAL**: 
+Initialize the project, write the core TypeScript code, and prepare the repository for publishing to GitHub and NPM.
+
+**REFERENCE**:
+Please read the detailed implementation plan first: `cat mempalace_opencode_plugin_design.md` (or read it via tools).
+Key dependencies to use: `@opencode-ai/plugin`, `execa` (for calling Python CLI), `typescript`.
+
+**TASKS**:
+1. Initialize a new Node.js + TypeScript project in the current workspace.
+2. Create `package.json` with appropriate metadata (name: `opencode-plugin-mempalace`).
+3. Implement `src/index.ts` containing the OpenCode Plugin Hooks (`experimental.session.compacting`, `chat.message`, `experimental.chat.system.transform`).
+4. Implement `src/mempalace-cli.ts` to wrap the python calls to MemPalace.
+5. Create a `README.md` explaining how to install and configure it in `.opencode/config.json`.
+6. Initialize a git repository and make the first commit.
+
+Please execute these tasks systematically. You can use TodoWrite to manage the steps.

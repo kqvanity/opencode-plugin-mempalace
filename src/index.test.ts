@@ -1,0 +1,66 @@
+import plugin from './index';
+import * as cli from './mempalace-cli';
+
+jest.mock('./mempalace-cli');
+
+describe('opencode-plugin-mempalace', () => {
+  let mockInput: any;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockInput = {
+      directory: '/Users/test/project',
+      worktree: '/Users/test/project',
+      $: jest.fn(),
+    };
+  });
+
+  it('registers the expected hooks', async () => {
+    const hooks = await plugin(mockInput);
+    expect(hooks['experimental.session.compacting']).toBeDefined();
+    expect(hooks['experimental.chat.system.transform']).toBeDefined();
+    expect(hooks['chat.message']).toBeDefined();
+  });
+
+  it('adds wake-up context on experimental.session.compacting', async () => {
+    (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
+    
+    const hooks = await plugin(mockInput);
+    const output: { context: string[] } = { context: [] };
+    
+    if (hooks['experimental.session.compacting']) {
+      await hooks['experimental.session.compacting']({ sessionID: 'sess-1' }, output);
+    }
+    
+    expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
+    expect(output.context).toContain('MOCKED_WAKEUP_DATA');
+  });
+
+  it('adds wake-up context on experimental.chat.system.transform', async () => {
+    (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
+    
+    const hooks = await plugin(mockInput);
+    const output: { system: string[] } = { system: [] };
+    
+    if (hooks['experimental.chat.system.transform']) {
+      await hooks['experimental.chat.system.transform']({ sessionID: 'sess-1', model: {} as any }, output);
+    }
+    
+    expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
+    expect(output.system).toContain('MOCKED_WAKEUP_DATA');
+  });
+
+  it('triggers mine after reaching the message threshold', async () => {
+    (cli.mine as jest.Mock).mockResolvedValue(undefined);
+    
+    const hooks = await plugin(mockInput, { threshold: 2 });
+    
+    if (hooks['chat.message']) {
+      await hooks['chat.message']({ sessionID: 'sess-1' }, { message: {} as any, parts: [] });
+      expect(cli.mine).not.toHaveBeenCalled();
+      
+      await hooks['chat.message']({ sessionID: 'sess-1' }, { message: {} as any, parts: [] });
+      expect(cli.mine).toHaveBeenCalledWith('/Users/test/project', 'convos', 'wing_project');
+    }
+  });
+});
