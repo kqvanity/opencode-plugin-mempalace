@@ -13,6 +13,7 @@ describe('opencode-plugin-mempalace', () => {
       worktree: '/Users/test/project',
       $: jest.fn(),
     };
+    (cli.isInitialized as jest.Mock).mockResolvedValue(true);
   });
 
   it('registers the expected hooks', async () => {
@@ -20,6 +21,21 @@ describe('opencode-plugin-mempalace', () => {
     expect(hooks['experimental.session.compacting']).toBeDefined();
     expect(hooks['experimental.chat.system.transform']).toBeDefined();
     expect(hooks['chat.message']).toBeDefined();
+  });
+
+  it('initializes if not initialized', async () => {
+    (cli.isInitialized as jest.Mock).mockResolvedValue(false);
+    (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
+    
+    const hooks = await plugin(mockInput);
+    const output: { system: string[] } = { system: [] };
+    
+    if (hooks['experimental.chat.system.transform']) {
+      await hooks['experimental.chat.system.transform']({ sessionID: 'sess-1', model: {} as any }, output);
+    }
+    
+    expect(cli.initialize).toHaveBeenCalledWith('/Users/test/project');
+    expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
   });
 
   it('adds wake-up context on experimental.session.compacting', async () => {
@@ -64,3 +80,4 @@ describe('opencode-plugin-mempalace', () => {
     }
   });
 });
+
