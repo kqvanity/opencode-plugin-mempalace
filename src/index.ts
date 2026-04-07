@@ -17,7 +17,6 @@ export default async function mempalacePlugin(
     if (initializationChecked) return;
     const initialized = await isInitialized(dir);
     if (!initialized) {
-      console.log(`[MemPalace] Auto-initializing palace for ${wing}...`);
       await initialize(dir);
     }
     initializationChecked = true;
@@ -52,9 +51,7 @@ export default async function mempalacePlugin(
     ) => {
       if (stateManager.incrementAndCheck(sessionID)) {
         await ensureInitialized();
-        mine(dir, 'convos', wing).catch((err) => {
-          console.error('[MemPalace] Failed to mine context:', err);
-        });
+        mine(dir, 'convos', wing).catch(() => {});
       }
     },
   };
