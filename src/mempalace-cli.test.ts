@@ -43,11 +43,12 @@ describe('mempalace-cli', () => {
     expect(result).toBe(true);
   });
 
-  it('initializes non-interactively', async () => {
+  it('initializes non-interactively with newline input', async () => {
     (execa as unknown as jest.Mock).mockResolvedValue({ stdout: 'Init OK' });
     await initialize('/test/dir');
-    expect(execa).toHaveBeenCalledWith('python3', ['-m', 'mempalace', 'init', '--yes', '/test/dir']);
+    expect(execa).toHaveBeenCalledWith('python3', ['-m', 'mempalace', 'init', '--yes', '/test/dir'], { input: '\n' });
   });
 });
+
 
 

@@ -13,7 +13,7 @@ export async function isInitialized(dir: string): Promise<boolean> {
 
 export async function initialize(dir: string): Promise<void> {
   try {
-    await execa('python3', ['-m', 'mempalace', 'init', '--yes', dir]);
+    await execa('python3', ['-m', 'mempalace', 'init', '--yes', dir], { input: '\n' });
   } catch (error) {
     console.warn(`Failed to initialize mempalace in ${dir}:`, error);
   }
