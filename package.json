@@ -38,6 +38,9 @@
     "url": "https://github.com/option-K/opencode-plugin-mempalace/issues"
   },
   "homepage": "https://github.com/option-K/opencode-plugin-mempalace#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "execa": "^5.1.1"
   },
