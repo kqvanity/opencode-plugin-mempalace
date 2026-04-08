@@ -28,16 +28,16 @@
     "llm",
     "terminal"
   ],
-  "author": "Kevin <your-email@example.com>",
+  "author": "Kevin <131496729+option-K@users.noreply.github.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/opencode-plugin-mempalace.git"
+    "url": "https://github.com/option-K/opencode-plugin-mempalace.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/opencode-plugin-mempalace/issues"
+    "url": "https://github.com/option-K/opencode-plugin-mempalace/issues"
   },
-  "homepage": "https://github.com/your-username/opencode-plugin-mempalace#readme",
+  "homepage": "https://github.com/option-K/opencode-plugin-mempalace#readme",
   "dependencies": {
     "execa": "^5.1.1"
   },
