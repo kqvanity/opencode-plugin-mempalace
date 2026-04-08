@@ -13,13 +13,7 @@ describe('mempalace-cli', () => {
       stdout: 'L0 context\nL1 context',
     });
     const result = await wakeUp('test_wing');
-    expect(execa).toHaveBeenCalledWith('python3', [
-      '-m',
-      'mempalace',
-      'wake-up',
-      '--wing',
-      'test_wing',
-    ]);
+    expect(execa).toHaveBeenCalledWith('mempalace', ['wake-up', '--wing', 'test_wing'], {});
     expect(result).toBe('L0 context\nL1 context');
   });
 
@@ -28,21 +22,16 @@ describe('mempalace-cli', () => {
       stdout: 'mined successfully',
     });
     await mine('/test/dir', 'convos', 'test_wing');
-    expect(execa).toHaveBeenCalledWith('python3', [
-      '-m',
+    expect(execa).toHaveBeenCalledWith(
       'mempalace',
-      'mine',
-      '/test/dir',
-      '--mode',
-      'convos',
-      '--wing',
-      'test_wing',
-    ]);
+      ['mine', '/test/dir', '--mode', 'convos', '--wing', 'test_wing'],
+      {},
+    );
   });
 
   it('handles missing mempalace gracefully', async () => {
     (execa as unknown as jest.Mock).mockRejectedValue(
-      new Error("ENOENT: no such file or directory, exec 'python3'"),
+      new Error("ENOENT: no such file or directory, exec 'mempalace'"),
     );
     const result = await wakeUp('test_wing');
     expect(result).toBeNull();
@@ -51,23 +40,19 @@ describe('mempalace-cli', () => {
   it('checks if palace is initialized', async () => {
     (execa as unknown as jest.Mock).mockResolvedValue({ stdout: 'Palace OK' });
     const result = await isInitialized('/test/dir');
-    expect(execa).toHaveBeenCalledWith('python3', [
-      '-m',
+    expect(execa).toHaveBeenCalledWith(
       'mempalace',
-      'status',
-      '--palace',
-      '/test/dir/.mempalace/palace',
-    ]);
+      ['status', '--palace', '/test/dir/.mempalace/palace'],
+      {},
+    );
     expect(result).toBe(true);
   });
 
   it('initializes non-interactively with newline input', async () => {
     (execa as unknown as jest.Mock).mockResolvedValue({ stdout: 'Init OK' });
     await initialize('/test/dir');
-    expect(execa).toHaveBeenCalledWith(
-      'python3',
-      ['-m', 'mempalace', 'init', '--yes', '/test/dir'],
-      { input: '\n' },
-    );
+    expect(execa).toHaveBeenCalledWith('mempalace', ['init', '--yes', '/test/dir'], {
+      input: '\n',
+    });
   });
 });
