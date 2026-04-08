@@ -1,8 +1,8 @@
-const plugin = require('./dist/index.js').default;
+import plugin from './dist/index.js';
 
 async function testPlugin() {
   console.log('--- Starting Plugin Integration Test ---');
-  
+
   const mockInput = {
     worktree: '/Users/test/projects/my-awesome-app',
     directory: '/Users/test/projects/my-awesome-app',
@@ -10,7 +10,7 @@ async function testPlugin() {
   };
 
   const options = {
-    threshold: 2
+    threshold: 2,
   };
 
   try {
@@ -19,7 +19,10 @@ async function testPlugin() {
 
     const sysOutput = { system: [] };
     if (hooks['experimental.chat.system.transform']) {
-      await hooks['experimental.chat.system.transform']({ sessionID: 'sess-1', model: {} }, sysOutput);
+      await hooks['experimental.chat.system.transform'](
+        { sessionID: 'sess-1', model: {} },
+        sysOutput,
+      );
       console.log('[OK] experimental.chat.system.transform ran successfully. Output:', sysOutput);
     }
 
@@ -32,14 +35,13 @@ async function testPlugin() {
     if (hooks['chat.message']) {
       console.log('Simulating message 1...');
       await hooks['chat.message']({ sessionID: 'sess-1' }, {});
-      
+
       console.log('Simulating message 2 (should trigger mine)...');
       await hooks['chat.message']({ sessionID: 'sess-1' }, {});
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
       console.log('[OK] chat.message tested.');
     }
-
   } catch (error) {
     console.error('[FAILED] Error running plugin test:', error);
   }

@@ -2,6 +2,11 @@ import execa from 'execa';
 import path from 'path';
 
 async function executeMempalace(args: string[], options: any = {}): Promise<any> {
+  const defaultOptions = {
+    timeout: 5000, // 5 seconds timeout to prevent hanging
+    ...options,
+  };
+
   const commands = [
     { cmd: 'mempalace', args: args },
     { cmd: 'python3', args: ['-m', 'mempalace', ...args] },
@@ -11,9 +16,11 @@ async function executeMempalace(args: string[], options: any = {}): Promise<any>
   let lastError;
   for (const { cmd, args: cmdArgs } of commands) {
     try {
-      return await execa(cmd, cmdArgs, options);
+      return await execa(cmd, cmdArgs, defaultOptions);
     } catch (error: any) {
       lastError = error;
+      // If it's a timeout, don't try other commands, just fail fast
+      if (error.timedOut) break;
     }
   }
   throw lastError;

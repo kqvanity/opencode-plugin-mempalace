@@ -13,7 +13,9 @@ describe('mempalace-cli', () => {
       stdout: 'L0 context\nL1 context',
     });
     const result = await wakeUp('test_wing');
-    expect(execa).toHaveBeenCalledWith('mempalace', ['wake-up', '--wing', 'test_wing'], {});
+    expect(execa).toHaveBeenCalledWith('mempalace', ['wake-up', '--wing', 'test_wing'], {
+      timeout: 5000,
+    });
     expect(result).toBe('L0 context\nL1 context');
   });
 
@@ -25,7 +27,7 @@ describe('mempalace-cli', () => {
     expect(execa).toHaveBeenCalledWith(
       'mempalace',
       ['mine', '/test/dir', '--mode', 'convos', '--wing', 'test_wing'],
-      {},
+      { timeout: 5000 },
     );
   });
 
@@ -43,7 +45,7 @@ describe('mempalace-cli', () => {
     expect(execa).toHaveBeenCalledWith(
       'mempalace',
       ['status', '--palace', '/test/dir/.mempalace/palace'],
-      {},
+      { timeout: 5000 },
     );
     expect(result).toBe(true);
   });
@@ -53,6 +55,7 @@ describe('mempalace-cli', () => {
     await initialize('/test/dir');
     expect(execa).toHaveBeenCalledWith('mempalace', ['init', '--yes', '/test/dir'], {
       input: '\n',
+      timeout: 5000,
     });
   });
 });
