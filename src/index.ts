@@ -1,11 +1,8 @@
-import { wakeUp, mine, isInitialized, initialize } from './mempalace-cli';
-import { StateManager } from './state';
-import { getWingFromPath } from './utils';
+import { wakeUp, mine, isInitialized, initialize } from './mempalace-cli.js';
+import { StateManager } from './state.js';
+import { getWingFromPath } from './utils.js';
 
-export default async function mempalacePlugin(
-  input: any,
-  options?: any
-): Promise<any> {
+export default async function mempalacePlugin(input: any, options?: any): Promise<any> {
   const dir = input.worktree || input.directory;
   const wing = getWingFromPath(dir);
   const threshold = (options?.threshold as number) || 15;
@@ -25,7 +22,7 @@ export default async function mempalacePlugin(
   return {
     'experimental.session.compacting': async (
       { sessionID }: { sessionID: string },
-      output: { context: string[]; prompt?: string }
+      output: { context: string[]; prompt?: string },
     ) => {
       await ensureInitialized();
       const memory = await wakeUp(wing);
@@ -33,10 +30,10 @@ export default async function mempalacePlugin(
         output.context.push(memory);
       }
     },
-    
+
     'experimental.chat.system.transform': async (
       { sessionID, model }: { sessionID?: string; model: any },
-      output: { system: string[] }
+      output: { system: string[] },
     ) => {
       await ensureInitialized();
       const memory = await wakeUp(wing);
@@ -45,10 +42,7 @@ export default async function mempalacePlugin(
       }
     },
 
-    'chat.message': async (
-      { sessionID }: { sessionID: string },
-      output: any
-    ) => {
+    'chat.message': async ({ sessionID }: { sessionID: string }, output: any) => {
       if (stateManager.incrementAndCheck(sessionID)) {
         await ensureInitialized();
         mine(dir, 'convos', wing).catch(() => {});
@@ -56,4 +50,3 @@ export default async function mempalacePlugin(
     },
   };
 }
-

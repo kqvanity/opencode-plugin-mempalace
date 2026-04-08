@@ -36,4 +36,3 @@ export async function mine(dir: string, mode: string, wing: string): Promise<voi
     console.warn(`Failed to mine mempalace:`, error);
   }
 }
-

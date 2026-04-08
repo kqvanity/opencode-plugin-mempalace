@@ -1,7 +1,7 @@
-import plugin from './index';
-import * as cli from './mempalace-cli';
+import plugin from './index.js';
+import * as cli from './mempalace-cli.js';
 
-jest.mock('./mempalace-cli');
+jest.mock('./mempalace-cli.js');
 
 describe('opencode-plugin-mempalace', () => {
   let mockInput: any;
@@ -26,59 +26,63 @@ describe('opencode-plugin-mempalace', () => {
   it('initializes if not initialized', async () => {
     (cli.isInitialized as jest.Mock).mockResolvedValue(false);
     (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
-    
+
     const hooks = await plugin(mockInput);
     const output: { system: string[] } = { system: [] };
-    
+
     if (hooks['experimental.chat.system.transform']) {
-      await hooks['experimental.chat.system.transform']({ sessionID: 'sess-1', model: {} as any }, output);
+      await hooks['experimental.chat.system.transform'](
+        { sessionID: 'sess-1', model: {} as any },
+        output,
+      );
     }
-    
+
     expect(cli.initialize).toHaveBeenCalledWith('/Users/test/project');
     expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
   });
 
   it('adds wake-up context on experimental.session.compacting', async () => {
     (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
-    
+
     const hooks = await plugin(mockInput);
     const output: { context: string[] } = { context: [] };
-    
+
     if (hooks['experimental.session.compacting']) {
       await hooks['experimental.session.compacting']({ sessionID: 'sess-1' }, output);
     }
-    
+
     expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
     expect(output.context).toContain('MOCKED_WAKEUP_DATA');
   });
 
   it('adds wake-up context on experimental.chat.system.transform', async () => {
     (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
-    
+
     const hooks = await plugin(mockInput);
     const output: { system: string[] } = { system: [] };
-    
+
     if (hooks['experimental.chat.system.transform']) {
-      await hooks['experimental.chat.system.transform']({ sessionID: 'sess-1', model: {} as any }, output);
+      await hooks['experimental.chat.system.transform'](
+        { sessionID: 'sess-1', model: {} as any },
+        output,
+      );
     }
-    
+
     expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
     expect(output.system).toContain('MOCKED_WAKEUP_DATA');
   });
 
   it('triggers mine after reaching the message threshold', async () => {
     (cli.mine as jest.Mock).mockResolvedValue(undefined);
-    
+
     const hooks = await plugin(mockInput, { threshold: 2 });
-    
+
     if (hooks['chat.message']) {
       await hooks['chat.message']({ sessionID: 'sess-1' }, { message: {} as any, parts: [] });
       expect(cli.mine).not.toHaveBeenCalled();
-      
+
       await hooks['chat.message']({ sessionID: 'sess-1' }, { message: {} as any, parts: [] });
       expect(cli.mine).toHaveBeenCalledWith('/Users/test/project', 'convos', 'wing_project');
     }
   });
 });
-
-

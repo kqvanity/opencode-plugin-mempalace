@@ -1,4 +1,4 @@
-import { StateManager } from './state';
+import { StateManager } from './state.js';
 
 describe('StateManager', () => {
   it('increments message count and triggers when threshold reached', () => {
@@ -9,4 +9,3 @@ describe('StateManager', () => {
     expect(state.incrementAndCheck('session-1')).toBe(false);
   });
 });
-
