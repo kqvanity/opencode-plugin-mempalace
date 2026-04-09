@@ -1,12 +1,18 @@
 import plugin from './index.js';
 import * as cli from './mempalace-cli.js';
+import * as utils from './utils.js';
 
 jest.mock('./mempalace-cli.js');
+jest.mock('./utils.js', () => ({
+  getWingFromPath: jest.fn().mockReturnValue('wing_project'),
+  isEmptyWorkspace: jest.fn().mockReturnValue(false),
+}));
 
 describe('opencode-plugin-mempalace', () => {
   let mockInput: any;
 
   beforeEach(() => {
+    jest.useFakeTimers();
     jest.clearAllMocks();
     mockInput = {
       directory: '/Users/test/project',
@@ -14,6 +20,11 @@ describe('opencode-plugin-mempalace', () => {
       $: jest.fn(),
     };
     (cli.isInitialized as jest.Mock).mockResolvedValue(true);
+    (utils.isEmptyWorkspace as jest.Mock).mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('registers the expected hooks', async () => {
@@ -24,9 +35,9 @@ describe('opencode-plugin-mempalace', () => {
     expect(hooks['chat.message']).toBeDefined();
   });
 
-  it('initializes if not initialized', async () => {
+  it('initializes asynchronously if not initialized and returns initializing status', async () => {
     (cli.isInitialized as jest.Mock).mockResolvedValue(false);
-    (cli.wakeUp as jest.Mock).mockResolvedValue('MOCKED_WAKEUP_DATA');
+    (cli.initialize as jest.Mock).mockResolvedValue(undefined);
 
     const hooks = await plugin(mockInput);
     const output: { system: string[] } = { system: [] };
@@ -39,7 +50,28 @@ describe('opencode-plugin-mempalace', () => {
     }
 
     expect(cli.initialize).toHaveBeenCalledWith('/Users/test/project');
-    expect(cli.wakeUp).toHaveBeenCalledWith('wing_project');
+    expect(cli.wakeUp).not.toHaveBeenCalled();
+    expect(output.system).toContain(
+      '[MemPalace]: 记忆系统正在后台异步构建中，本次回答暂无历史记忆上下文。',
+    );
+  });
+
+  it('returns empty workspace status if project is empty', async () => {
+    (utils.isEmptyWorkspace as jest.Mock).mockReturnValue(true);
+
+    const hooks = await plugin(mockInput);
+    const output: { system: string[] } = { system: [] };
+
+    if (hooks['experimental.chat.system.transform']) {
+      await hooks['experimental.chat.system.transform'](
+        { sessionID: 'sess-1', model: {} as any },
+        output,
+      );
+    }
+
+    expect(cli.initialize).not.toHaveBeenCalled();
+    expect(cli.wakeUp).not.toHaveBeenCalled();
+    expect(output.system).toContain('[MemPalace]: 该环境暂无记忆，请按常规逻辑作答。');
   });
 
   it('adds wake-up context on experimental.session.compacting', async () => {
@@ -83,6 +115,7 @@ describe('opencode-plugin-mempalace', () => {
       expect(cli.mine).not.toHaveBeenCalled();
 
       await hooks['chat.message']({ sessionID: 'sess-1' }, { message: {} as any, parts: [] });
+      jest.advanceTimersByTime(2000);
       expect(cli.mine).toHaveBeenCalledWith('/Users/test/project', 'convos', 'wing_project');
     }
   });
@@ -102,6 +135,7 @@ describe('opencode-plugin-mempalace', () => {
           properties: { sessionID: 'sess-idle' },
         },
       });
+      jest.advanceTimersByTime(2000);
       expect(cli.mine).toHaveBeenCalledWith('/Users/test/project', 'convos', 'wing_project');
     }
   });

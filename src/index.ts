@@ -1,6 +1,6 @@
 import { wakeUp, mine, mineSync, isInitialized, initialize } from './mempalace-cli.js';
 import { StateManager } from './state.js';
-import { getWingFromPath } from './utils.js';
+import { getWingFromPath, isEmptyWorkspace } from './utils.js';
 
 export default async function mempalacePlugin(input: any, options?: any): Promise<any> {
   const dir = input.worktree || input.directory || process.cwd();
@@ -8,15 +8,41 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
   const threshold = (options?.threshold as number) || 15;
   const stateManager = new StateManager(threshold);
 
-  let initializationChecked = false;
+  let initializationDone = false;
+  let isInitializing = false;
 
-  const ensureInitialized = async () => {
-    if (initializationChecked) return;
-    const initialized = await isInitialized(dir);
-    if (!initialized) {
-      await initialize(dir);
+  const ensureInitialized = async (): Promise<'ready' | 'initializing' | 'empty'> => {
+    if (isEmptyWorkspace(dir)) {
+      return 'empty';
     }
-    initializationChecked = true;
+
+    if (initializationDone) {
+      return 'ready';
+    }
+
+    if (isInitializing) {
+      return 'initializing';
+    }
+
+    const initialized = await isInitialized(dir);
+    if (initialized) {
+      initializationDone = true;
+      return 'ready';
+    }
+
+    isInitializing = true;
+    initialize(dir)
+      .then(() => {
+        initializationDone = true;
+      })
+      .catch((e) => {
+        console.warn('Background initialization failed:', e);
+      })
+      .finally(() => {
+        isInitializing = false;
+      });
+
+    return 'initializing';
   };
 
   const MAX_MEMORY_LENGTH = 4000;
@@ -55,13 +81,20 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
         if (sessionID && stateManager.hasPendingMessages(sessionID)) {
           if (!stateManager.acquireMiningLock(sessionID)) return;
 
-          await ensureInitialized();
-          mine(dir, 'convos', wing)
-            .catch(() => {})
-            .finally(() => {
-              stateManager.releaseMiningLock(sessionID);
-              stateManager.resetCount(sessionID);
-            });
+          const state = await ensureInitialized();
+          if (state !== 'ready') {
+            stateManager.releaseMiningLock(sessionID);
+            return;
+          }
+
+          setTimeout(() => {
+            mine(dir, 'convos', wing)
+              .catch(() => {})
+              .finally(() => {
+                stateManager.releaseMiningLock(sessionID);
+                stateManager.resetCount(sessionID);
+              });
+          }, 2000);
         }
       }
     },
@@ -70,7 +103,18 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
       _: any,
       output: { context: string[]; prompt?: string },
     ) => {
-      await ensureInitialized();
+      const state = await ensureInitialized();
+      if (state === 'empty') {
+        output.context.push('[MemPalace]: 该环境暂无记忆，请按常规逻辑作答。');
+        return;
+      }
+      if (state === 'initializing') {
+        output.context.push(
+          '[MemPalace]: 记忆系统正在后台异步构建中，本次回答暂无历史记忆上下文。',
+        );
+        return;
+      }
+
       const memory = await wakeUp(wing);
       if (memory) {
         const truncatedMemory =
@@ -82,7 +126,16 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
     },
 
     'experimental.chat.system.transform': async (_: any, output: { system: string[] }) => {
-      await ensureInitialized();
+      const state = await ensureInitialized();
+      if (state === 'empty') {
+        output.system.push('[MemPalace]: 该环境暂无记忆，请按常规逻辑作答。');
+        return;
+      }
+      if (state === 'initializing') {
+        output.system.push('[MemPalace]: 记忆系统正在后台异步构建中，本次回答暂无历史记忆上下文。');
+        return;
+      }
+
       const memory = await wakeUp(wing);
       if (memory) {
         const truncatedMemory =
@@ -97,12 +150,20 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
       if (stateManager.incrementAndCheck(sessionID)) {
         if (!stateManager.acquireMiningLock(sessionID)) return;
 
-        await ensureInitialized();
-        mine(dir, 'convos', wing)
-          .catch(() => {})
-          .finally(() => {
-            stateManager.releaseMiningLock(sessionID);
-          });
+        const state = await ensureInitialized();
+        if (state !== 'ready') {
+          stateManager.releaseMiningLock(sessionID);
+          return;
+        }
+
+        // Delay to protect TTFT
+        setTimeout(() => {
+          mine(dir, 'convos', wing)
+            .catch(() => {})
+            .finally(() => {
+              stateManager.releaseMiningLock(sessionID);
+            });
+        }, 2000);
       }
     },
   };
