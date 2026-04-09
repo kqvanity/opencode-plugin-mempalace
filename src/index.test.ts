@@ -18,6 +18,7 @@ describe('opencode-plugin-mempalace', () => {
 
   it('registers the expected hooks', async () => {
     const hooks = await plugin(mockInput);
+    expect(hooks.event).toBeDefined();
     expect(hooks['experimental.session.compacting']).toBeDefined();
     expect(hooks['experimental.chat.system.transform']).toBeDefined();
     expect(hooks['chat.message']).toBeDefined();
@@ -83,6 +84,41 @@ describe('opencode-plugin-mempalace', () => {
 
       await hooks['chat.message']({ sessionID: 'sess-1' }, { message: {} as any, parts: [] });
       expect(cli.mine).toHaveBeenCalledWith('/Users/test/project', 'convos', 'wing_project');
+    }
+  });
+
+  it('triggers mine on session idle when there are pending messages', async () => {
+    (cli.mine as jest.Mock).mockResolvedValue(undefined);
+
+    const hooks = await plugin(mockInput, { threshold: 15 });
+
+    if (hooks['chat.message'] && hooks.event) {
+      await hooks['chat.message']({ sessionID: 'sess-idle' }, { message: {} as any, parts: [] });
+      expect(cli.mine).not.toHaveBeenCalled();
+
+      await hooks.event({
+        event: {
+          type: 'session.idle',
+          properties: { sessionID: 'sess-idle' },
+        },
+      });
+      expect(cli.mine).toHaveBeenCalledWith('/Users/test/project', 'convos', 'wing_project');
+    }
+  });
+
+  it('does not trigger mine on session idle when no pending messages', async () => {
+    (cli.mine as jest.Mock).mockResolvedValue(undefined);
+
+    const hooks = await plugin(mockInput, { threshold: 15 });
+
+    if (hooks.event) {
+      await hooks.event({
+        event: {
+          type: 'session.idle',
+          properties: { sessionID: 'sess-clean' },
+        },
+      });
+      expect(cli.mine).not.toHaveBeenCalled();
     }
   });
 });

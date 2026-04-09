@@ -20,6 +20,24 @@ export class StateManager {
     return false;
   }
 
+  hasPendingMessages(sessionId: string): boolean {
+    return (this.counts.get(sessionId) || 0) > 0;
+  }
+
+  resetCount(sessionId: string): void {
+    this.counts.set(sessionId, 0);
+  }
+
+  getDirtySessions(): string[] {
+    const dirty: string[] = [];
+    for (const [sessionId, count] of this.counts.entries()) {
+      if (count > 0 && !this.miningLocks.get(sessionId)) {
+        dirty.push(sessionId);
+      }
+    }
+    return dirty;
+  }
+
   acquireMiningLock(sessionId: string): boolean {
     if (this.miningLocks.get(sessionId)) {
       return false;

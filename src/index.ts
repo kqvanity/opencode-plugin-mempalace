@@ -1,4 +1,4 @@
-import { wakeUp, mine, isInitialized, initialize } from './mempalace-cli.js';
+import { wakeUp, mine, mineSync, isInitialized, initialize } from './mempalace-cli.js';
 import { StateManager } from './state.js';
 import { getWingFromPath } from './utils.js';
 
@@ -21,9 +21,53 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
 
   const MAX_MEMORY_LENGTH = 4000;
 
+  let isFlushing = false;
+  const flushDirtySessions = () => {
+    if (isFlushing) return;
+    isFlushing = true;
+    const dirtySessions = stateManager.getDirtySessions();
+    if (dirtySessions.length > 0) {
+      mineSync(dir, 'convos', wing);
+      for (const id of dirtySessions) {
+        stateManager.resetCount(id);
+      }
+    }
+  };
+
+  process.on('exit', flushDirtySessions);
+  process.on('SIGINT', () => {
+    flushDirtySessions();
+    process.exit(130);
+  });
+  process.on('SIGTERM', () => {
+    flushDirtySessions();
+    process.exit(143);
+  });
+
   return {
+    event: async ({ event }: { event: any }) => {
+      if (
+        event.type === 'session.idle' ||
+        event.type === 'session.deleted' ||
+        (event.type === 'session.status' && event.properties?.status?.type === 'idle')
+      ) {
+        const sessionID = event.properties?.sessionID || event.properties?.info?.id;
+        if (sessionID && stateManager.hasPendingMessages(sessionID)) {
+          if (!stateManager.acquireMiningLock(sessionID)) return;
+
+          await ensureInitialized();
+          mine(dir, 'convos', wing)
+            .catch(() => {})
+            .finally(() => {
+              stateManager.releaseMiningLock(sessionID);
+              stateManager.resetCount(sessionID);
+            });
+        }
+      }
+    },
+
     'experimental.session.compacting': async (
-      { sessionID }: { sessionID: string },
+      _: any,
       output: { context: string[]; prompt?: string },
     ) => {
       await ensureInitialized();
@@ -37,10 +81,7 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
       }
     },
 
-    'experimental.chat.system.transform': async (
-      { sessionID, model }: { sessionID?: string; model: any },
-      output: { system: string[] },
-    ) => {
+    'experimental.chat.system.transform': async (_: any, output: { system: string[] }) => {
       await ensureInitialized();
       const memory = await wakeUp(wing);
       if (memory) {
@@ -52,7 +93,7 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
       }
     },
 
-    'chat.message': async ({ sessionID }: { sessionID: string }, output: any) => {
+    'chat.message': async ({ sessionID }: { sessionID: string }) => {
       if (stateManager.incrementAndCheck(sessionID)) {
         if (!stateManager.acquireMiningLock(sessionID)) return;
 

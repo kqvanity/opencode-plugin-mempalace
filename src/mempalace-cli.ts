@@ -61,3 +61,21 @@ export async function mine(dir: string, mode: string, wing: string): Promise<voi
     console.warn(`Failed to mine mempalace:`, error);
   }
 }
+
+export function mineSync(dir: string, mode: string, wing: string): void {
+  const options = { timeout: 5000 };
+  const commands = [
+    { cmd: 'mempalace', args: ['mine', dir, '--mode', mode, '--wing', wing] },
+    { cmd: 'python3', args: ['-m', 'mempalace', 'mine', dir, '--mode', mode, '--wing', wing] },
+    { cmd: 'python', args: ['-m', 'mempalace', 'mine', dir, '--mode', mode, '--wing', wing] },
+  ];
+
+  for (const { cmd, args } of commands) {
+    try {
+      execa.sync(cmd, args, options);
+      return;
+    } catch (error: any) {
+      if (error.timedOut) break;
+    }
+  }
+}

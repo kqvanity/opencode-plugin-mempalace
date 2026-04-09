@@ -1,0 +1,6 @@
+src/
+test-plugin-integration.js
+jest.config.cjs
+tsconfig.json
+.eslintrc.json
+.prettierrc

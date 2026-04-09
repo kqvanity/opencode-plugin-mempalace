@@ -13,6 +13,9 @@ This plugin ensures your AI assistant has a long-term memory across sessions by 
 - **Auto-Injection (Wake-up)**: Automatically wakes up MemPalace on session initialization to inject L0 (Global Identity) and L1 (Critical Facts) directly into the AI's System Prompt.
 - **Pre-Compaction Rescue**: Adds your core memory context back right before OpenCode compresses the conversation, ensuring crucial details are never lost.
 - **Silent Background Mining**: Quietly exports and saves your conversational history into your MemPalace database as you chat, preserving decisions for future usage without spending extra tokens on MCP tool calls.
+- **Crash Safety & Idle Auto-Save**: Never lose your context, even if you close the terminal early!
+  - _Idle Auto-Save_: If your session is deleted or you simply stop chatting (idle), any un-saved messages are softly mined in the background.
+  - _Crash Safety_: If you force-quit the terminal (`Ctrl+C`), the plugin intercepts the exit signal and performs a synchronous emergency save.
 
 ## 📋 Requirements
 
@@ -57,6 +60,8 @@ You can pass configuration options to the plugin to customize its behavior. Curr
   - `experimental.chat.system.transform`: Injects memory.
   - `experimental.session.compacting`: Rescues memory from truncation.
   - `chat.message`: Tracks conversation length and triggers background mining.
+  - `event`: Listens for `session.idle` and `session.deleted` for soft-exit saving.
+  - `process.on('exit' | 'SIGINT' | 'SIGTERM')`: Intercepts hard process exits for emergency synchronous saving.
 - **Workspace Isolation**: It infers the wing name intelligently from the workspace path (e.g. `/projects/my-app` -> `wing_my-app`). Your memory stays isolated per project!
 
 ## 🧑‍💻 Development
