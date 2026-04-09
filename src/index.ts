@@ -105,12 +105,14 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
     ) => {
       const state = await ensureInitialized();
       if (state === 'empty') {
-        output.context.push('[MemPalace]: 该环境暂无记忆，请按常规逻辑作答。');
+        output.context.push(
+          '[MemPalace]: This environment has no memory yet. Please proceed with standard logic.',
+        );
         return;
       }
       if (state === 'initializing') {
         output.context.push(
-          '[MemPalace]: 记忆系统正在后台异步构建中，本次回答暂无历史记忆上下文。',
+          '[MemPalace]: The memory system is being built asynchronously in the background. The current response will not include historical memory context.',
         );
         return;
       }
@@ -128,11 +130,15 @@ export default async function mempalacePlugin(input: any, options?: any): Promis
     'experimental.chat.system.transform': async (_: any, output: { system: string[] }) => {
       const state = await ensureInitialized();
       if (state === 'empty') {
-        output.system.push('[MemPalace]: 该环境暂无记忆，请按常规逻辑作答。');
+        output.system.push(
+          '[MemPalace]: This environment has no memory yet. Please proceed with standard logic.',
+        );
         return;
       }
       if (state === 'initializing') {
-        output.system.push('[MemPalace]: 记忆系统正在后台异步构建中，本次回答暂无历史记忆上下文。');
+        output.system.push(
+          '[MemPalace]: The memory system is being built asynchronously in the background. The current response will not include historical memory context.',
+        );
         return;
       }
 

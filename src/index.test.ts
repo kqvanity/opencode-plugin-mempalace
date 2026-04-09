@@ -52,7 +52,7 @@ describe('opencode-plugin-mempalace', () => {
     expect(cli.initialize).toHaveBeenCalledWith('/Users/test/project');
     expect(cli.wakeUp).not.toHaveBeenCalled();
     expect(output.system).toContain(
-      '[MemPalace]: 记忆系统正在后台异步构建中，本次回答暂无历史记忆上下文。',
+      '[MemPalace]: The memory system is being built asynchronously in the background. The current response will not include historical memory context.',
     );
   });
 
@@ -71,7 +71,9 @@ describe('opencode-plugin-mempalace', () => {
 
     expect(cli.initialize).not.toHaveBeenCalled();
     expect(cli.wakeUp).not.toHaveBeenCalled();
-    expect(output.system).toContain('[MemPalace]: 该环境暂无记忆，请按常规逻辑作答。');
+    expect(output.system).toContain(
+      '[MemPalace]: This environment has no memory yet. Please proceed with standard logic.',
+    );
   });
 
   it('adds wake-up context on experimental.session.compacting', async () => {
