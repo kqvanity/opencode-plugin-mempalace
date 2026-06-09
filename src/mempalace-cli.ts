@@ -8,6 +8,7 @@ async function executeMempalace(args: string[], options: any = {}): Promise<any>
   };
 
   const commands = [
+    { cmd: 'uvx', args: ['mempalace', ...args] },
     { cmd: 'mempalace', args: args },
     { cmd: 'python3', args: ['-m', 'mempalace', ...args] },
     { cmd: 'python', args: ['-m', 'mempalace', ...args] },
@@ -65,6 +66,7 @@ export async function mine(dir: string, mode: string, wing: string): Promise<voi
 export function mineSync(dir: string, mode: string, wing: string): void {
   const options = { timeout: 5000 };
   const commands = [
+    { cmd: 'uvx', args: ['mempalace', 'mine', dir, '--mode', mode, '--wing', wing] },
     { cmd: 'mempalace', args: ['mine', dir, '--mode', mode, '--wing', wing] },
     { cmd: 'python3', args: ['-m', 'mempalace', 'mine', dir, '--mode', mode, '--wing', wing] },
     { cmd: 'python', args: ['-m', 'mempalace', 'mine', dir, '--mode', mode, '--wing', wing] },
